@@ -26,8 +26,19 @@ defmodule Srh.Http.CommandHandler do
     case GenRegistry.lookup_or_start(Client, srh_id, [max_connections, connection_info]) do
       {:ok, pid} ->
         # Run the command
-        {:ok, res} = Client.redis_command(pid, command_array)
-        {:ok, %{result: res}}
+        case Client.redis_command(pid, command_array) do
+          {:ok, res} ->
+            {:ok, %{result: res}}
+          {:error, error} ->
+            {
+              :malformed_data,
+              Jason.encode!(
+                %{
+                  error: error.message
+                }
+              )
+            }
+        end
       {:error, msg} ->
         {:server_error, msg}
     end

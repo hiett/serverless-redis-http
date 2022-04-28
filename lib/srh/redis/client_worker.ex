@@ -27,10 +27,6 @@ defmodule Srh.Redis.ClientWorker do
       when is_pid(redix_pid) do
     case Redix.command(redix_pid, command_array) do
       {:ok, res} ->
-        IO.puts("Worker PID:")
-        IO.inspect(self())
-        IO.puts("Worker Redis response:")
-        IO.inspect(res)
         {:reply, {:ok, res}, state}
 
       {:error, res} ->
