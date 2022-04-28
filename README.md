@@ -1,4 +1,4 @@
-# Serverless Redis HTTP
+# SRH: Serverless Redis HTTP
 A redis connection pooler for serverless applications. This allows your serverless functions to talk to Redis via HTTP,
 while also not having to worry about the Redis max connection limits.
 

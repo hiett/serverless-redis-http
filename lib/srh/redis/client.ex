@@ -3,7 +3,7 @@ defmodule Srh.Redis.Client do
   alias Srh.Redis.ClientRegistry
   alias Srh.Redis.ClientWorker
 
-  @idle_death_time 1000 * 3
+  @idle_death_time 1000 * 15
 
   def start_link(max_connections, connection_info) do
     GenServer.start_link(__MODULE__, {max_connections, connection_info}, [])
@@ -66,7 +66,7 @@ defmodule Srh.Redis.Client do
     {:ok, pid} = ClientRegistry.start_link()
 
     # Spin up three workers
-    for _ <- 0..2 do
+    for _ <- 1..Map.get(state.connection_info, "max_connections", 3) do
       {:ok, worker} = ClientWorker.start_link(state.connection_info)
       ClientRegistry.add_worker(pid, worker)
     end
