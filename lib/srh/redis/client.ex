@@ -25,15 +25,15 @@ defmodule Srh.Redis.Client do
     }
   end
 
-  def redis_command(client, command_array)  do
-    GenServer.call(client, {:redis_command, command_array})
+  def find_worker(client)  do
+    GenServer.call(client, {:find_worker})
   end
 
-  def handle_call({:redis_command, command_array}, _from, %{registry_pid: registry_pid} = state)
+  def handle_call({:find_worker}, _from, %{registry_pid: registry_pid} = state)
       when is_pid(registry_pid) do
     {:ok, worker} = ClientRegistry.find_worker(registry_pid)
     Process.send(self(), :reset_idle_death, [])
-    {:reply, ClientWorker.redis_command(worker, command_array), state}
+    {:reply, worker, state}
   end
 
   def handle_call(_msg, _from, state) do

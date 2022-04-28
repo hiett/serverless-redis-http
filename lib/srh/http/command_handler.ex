@@ -2,6 +2,7 @@ defmodule Srh.Http.CommandHandler do
   alias Srh.Http.RequestValidator
   alias Srh.Auth.TokenResolver
   alias Srh.Redis.Client
+  alias Srh.Redis.ClientWorker
 
   def handle_command(conn, token) do
     case RequestValidator.validate_redis_body(conn.body_params) do
@@ -26,7 +27,8 @@ defmodule Srh.Http.CommandHandler do
     case GenRegistry.lookup_or_start(Client, srh_id, [max_connections, connection_info]) do
       {:ok, pid} ->
         # Run the command
-        case Client.redis_command(pid, command_array) do
+        case Client.find_worker(pid)
+             |> ClientWorker.redis_command(command_array) do
           {:ok, res} ->
             {:ok, %{result: res}}
           {:error, error} ->
