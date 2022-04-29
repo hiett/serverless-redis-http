@@ -34,6 +34,7 @@ defmodule Srh.Http.BaseRouter do
         {:ok, data} -> %{code: 200, message: Jason.encode!(data)}
         {:not_found, message} -> %{code: 404, message: message}
         {:malformed_data, message} -> %{code: 400, message: message}
+        {:not_authorized, message} -> %{code: 401, message: message}
         {:server_error, _} -> %{code: 500, message: "An error occurred internally"}
       end
 

@@ -28,3 +28,5 @@ srh-*.tar
 .idea/
 
 *.iml
+
+srh-config/

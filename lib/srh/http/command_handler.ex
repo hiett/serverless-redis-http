@@ -18,7 +18,7 @@ defmodule Srh.Http.CommandHandler do
     case TokenResolver.resolve(token) do
       {:ok, connection_info} ->
         dispatch_command(command_array, connection_info)
-      {:error, _} -> {:error, "Invalid token"}
+      {:error, msg} -> {:not_authorized, msg}
     end
   end
 
