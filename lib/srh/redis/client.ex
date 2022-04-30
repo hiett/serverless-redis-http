@@ -10,8 +10,6 @@ defmodule Srh.Redis.Client do
   end
 
   def init({max_connections, connection_info}) do
-    IO.puts("Client starting alive! Srh_id=#{Map.get(connection_info, "srh_id", "not found")}")
-
     Process.send(self(), :create_registry, [])
 
     {
@@ -45,7 +43,6 @@ defmodule Srh.Redis.Client do
   end
 
   def handle_info(:idle_death, state) do
-    IO.puts("Client dying! No requests for period. Srh_id=#{Map.get(state.connection_info, "srh_id", "not found")}")
     ClientRegistry.destroy_workers(state.registry_pid)
 
     {:stop, :normal, state}

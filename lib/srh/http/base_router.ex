@@ -50,7 +50,6 @@ defmodule Srh.Http.BaseRouter do
         {:not_authorized, message} -> %{code: 401, message: message, json: false}
         {:server_error, _} -> %{code: 500, message: "An error occurred internally", json: false}
         other ->
-          IO.inspect(other)
           %{code: 500, message: "An error occurred internally", json: false}
       end
 

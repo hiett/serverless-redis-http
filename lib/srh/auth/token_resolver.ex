@@ -37,8 +37,6 @@ defmodule Srh.Auth.TokenResolver do
   end
 
   def resolve(token) do
-    IO.puts("Resolving token: #{token}")
-
     do_resolve(@mode, token)
   end
 

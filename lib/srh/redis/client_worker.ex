@@ -6,8 +6,6 @@ defmodule Srh.Redis.ClientWorker do
   end
 
   def init(connection_info) do
-    IO.puts("Client worker reporting for duty! Srh_id=#{Map.get(connection_info, "srh_id", "not found")}")
-
     Process.send(self(), :create_connection, [])
 
     {
@@ -35,7 +33,6 @@ defmodule Srh.Redis.ClientWorker do
   end
 
   def handle_call(msg, _from, state) do
-    IO.inspect(msg)
     {:reply, :ok, state}
   end
 
@@ -54,7 +51,6 @@ defmodule Srh.Redis.ClientWorker do
       )
       when is_binary(connection_string) do
     {:ok, pid} = Redix.start_link(connection_string)
-    IO.puts("Redis up and running for worker Srh_id=#{Map.get(state.connection_info, "srh_id", "not found")}")
     {:noreply, %{state | redix_pid: pid}}
   end
 

@@ -40,8 +40,6 @@ defmodule Srh.Redis.ClientRegistry do
           false -> target
         end
 
-        IO.puts("Worker target: #{corrected_target}, pool size: #{len}")
-
         {:reply, {:ok, Enum.at(state.worker_pids, corrected_target)}, %{state | last_worker_index: corrected_target}}
     end
   end

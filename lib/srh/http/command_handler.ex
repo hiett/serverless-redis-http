@@ -7,7 +7,6 @@ defmodule Srh.Http.CommandHandler do
   def handle_command(conn, token) do
     case RequestValidator.validate_redis_body(conn.body_params) do
       {:ok, command_array} ->
-        IO.inspect(command_array)
         do_handle_command(command_array, token)
       {:error, error_message} ->
         {:malformed_data, error_message}
@@ -17,7 +16,6 @@ defmodule Srh.Http.CommandHandler do
   def handle_command_array(conn, token) do
     case RequestValidator.validate_pipeline_redis_body(conn.body_params) do
       {:ok, array_of_command_arrays} ->
-        IO.inspect(array_of_command_arrays)
         do_handle_command_array(array_of_command_arrays, token)
       {:error, error_message} ->
         {:malformed_data, error_message}
