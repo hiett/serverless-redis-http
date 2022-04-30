@@ -49,7 +49,7 @@ defmodule Srh.Http.BaseRouter do
         {:malformed_data, message} -> %{code: 400, message: message, json: false}
         {:not_authorized, message} -> %{code: 401, message: message, json: false}
         {:server_error, _} -> %{code: 500, message: "An error occurred internally", json: false}
-        other ->
+        _ ->
           %{code: 500, message: "An error occurred internally", json: false}
       end
 

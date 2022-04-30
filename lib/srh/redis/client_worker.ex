@@ -32,7 +32,7 @@ defmodule Srh.Redis.ClientWorker do
     end
   end
 
-  def handle_call(msg, _from, state) do
+  def handle_call(_msg, _from, state) do
     {:reply, :ok, state}
   end
 

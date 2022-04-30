@@ -3,7 +3,6 @@ defmodule Srh.Auth.TokenResolver do
 
   @mode Application.fetch_env!(:srh, :mode)
   @file_path Application.fetch_env!(:srh, :file_path)
-  @file_hard_reload Application.fetch_env!(:srh, :file_hard_reload)
 
   @ets_table_name :srh_token_resolver
 
@@ -74,7 +73,7 @@ defmodule Srh.Auth.TokenResolver do
     end
   end
 
-  defp do_resolve("redis", token) do
+  defp do_resolve("redis", _token) do
     {
       :ok,
       # This is done to replicate what will eventually be API endpoints, so they keys are not atoms

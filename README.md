@@ -2,7 +2,7 @@
 A Redis connection pooler for serverless applications. This allows your serverless functions to talk to Redis via HTTP,
 while also not having to worry about the Redis max connection limits.
 
-The idea is you host this alongside your Redis server, so minimise latency. The serverless functions can then talk to 
+The idea is you host this alongside your Redis server, to minimise latency. Your serverless functions can then talk to 
 this via HTTP.
 
 ## Features

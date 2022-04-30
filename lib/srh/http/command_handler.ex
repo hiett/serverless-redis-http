@@ -38,7 +38,9 @@ defmodule Srh.Http.CommandHandler do
     end
   end
 
-  defp dispatch_command_array([current | rest], connection_info, responses \\ []) do
+  defp dispatch_command_array(_arr, _connection_info, responses \\ [])
+  
+  defp dispatch_command_array([current | rest], connection_info, responses) do
     updated_responses = case dispatch_command(current, connection_info) do
       {:ok, result_map} ->
         [result_map | responses]
@@ -50,7 +52,7 @@ defmodule Srh.Http.CommandHandler do
     dispatch_command_array(rest, connection_info, updated_responses)
   end
 
-  defp dispatch_command_array([], connection_info, responses) do
+  defp dispatch_command_array([], _connection_info, responses) do
     # The responses will be in reverse order, as we're adding them to the list with the faster method of putting them at head.
     {:ok, Enum.reverse(responses)}
   end
