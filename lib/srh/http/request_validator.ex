@@ -1,10 +1,14 @@
 defmodule Srh.Http.RequestValidator do
-  def validate_redis_body(%{"_json" => command_array}) when is_list(command_array), do: {:ok, command_array}
+  def validate_redis_body(%{"_json" => command_array}) when is_list(command_array),
+    do: {:ok, command_array}
 
   def validate_redis_body(_),
-      do: {:error, "Invalid command array. Expected a string array at root of the command and its arguments."}
+    do:
+      {:error,
+       "Invalid command array. Expected a string array at root of the command and its arguments."}
 
-  def validate_pipeline_redis_body(%{"_json" => array_of_command_arrays}) when is_list(array_of_command_arrays) do
+  def validate_pipeline_redis_body(%{"_json" => array_of_command_arrays})
+      when is_list(array_of_command_arrays) do
     do_validate_pipeline_redis_body(array_of_command_arrays, array_of_command_arrays)
   end
 
@@ -32,6 +36,7 @@ defmodule Srh.Http.RequestValidator do
          |> String.split(" ") do
       ["Bearer", token] ->
         {:ok, token}
+
       _ ->
         do_validate_bearer_header(rest)
     end

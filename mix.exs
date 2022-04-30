@@ -8,7 +8,13 @@ defmodule Srh.MixProject do
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       config_path: "config/config.exs",
-      deps: deps()
+      deps: deps(),
+      releases: [
+        prod: [
+          include_executables_for: [:unix],
+          steps: [:assemble, :tar]
+        ]
+      ]
     ]
   end
 

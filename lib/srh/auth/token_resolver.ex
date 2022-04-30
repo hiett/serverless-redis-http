@@ -55,7 +55,7 @@ defmodule Srh.Auth.TokenResolver do
     # Load this into ETS
     Enum.each(
       config_file_data,
-      &(:ets.insert(@ets_table_name, &1))
+      &:ets.insert(@ets_table_name, &1)
     )
   end
 
@@ -78,13 +78,11 @@ defmodule Srh.Auth.TokenResolver do
       :ok,
       # This is done to replicate what will eventually be API endpoints, so they keys are not atoms
       Jason.decode!(
-        Jason.encode!(
-          %{
-            srh_id: "1000",
-            connection_string: "redis://localhost:6379",
-            max_connections: 10
-          }
-        )
+        Jason.encode!(%{
+          srh_id: "1000",
+          connection_string: "redis://localhost:6379",
+          max_connections: 10
+        })
       )
     }
   end

@@ -8,6 +8,7 @@ defmodule Srh.Http.CommandHandler do
     case RequestValidator.validate_redis_body(conn.body_params) do
       {:ok, command_array} ->
         do_handle_command(command_array, token)
+
       {:error, error_message} ->
         {:malformed_data, error_message}
     end
@@ -17,6 +18,7 @@ defmodule Srh.Http.CommandHandler do
     case RequestValidator.validate_pipeline_redis_body(conn.body_params) do
       {:ok, array_of_command_arrays} ->
         do_handle_command_array(array_of_command_arrays, token)
+
       {:error, error_message} ->
         {:malformed_data, error_message}
     end
@@ -26,7 +28,9 @@ defmodule Srh.Http.CommandHandler do
     case TokenResolver.resolve(token) do
       {:ok, connection_info} ->
         dispatch_command(command_array, connection_info)
-      {:error, msg} -> {:not_authorized, msg}
+
+      {:error, msg} ->
+        {:not_authorized, msg}
     end
   end
 
@@ -34,20 +38,24 @@ defmodule Srh.Http.CommandHandler do
     case TokenResolver.resolve(token) do
       {:ok, connection_info} ->
         dispatch_command_array(array_of_command_arrays, connection_info)
-      {:error, msg} -> {:not_authorized, msg}
+
+      {:error, msg} ->
+        {:not_authorized, msg}
     end
   end
 
   defp dispatch_command_array(_arr, _connection_info, responses \\ [])
-  
+
   defp dispatch_command_array([current | rest], connection_info, responses) do
-    updated_responses = case dispatch_command(current, connection_info) do
-      {:ok, result_map} ->
-        [result_map | responses]
-      {:malformed_data, result_json} ->
-        # TODO: change up the chain to json this at the last moment, so this isn't here
-        [Jason.decode!(result_json) | responses]
-    end
+    updated_responses =
+      case dispatch_command(current, connection_info) do
+        {:ok, result_map} ->
+          [result_map | responses]
+
+        {:malformed_data, result_json} ->
+          # TODO: change up the chain to json this at the last moment, so this isn't here
+          [Jason.decode!(result_json) | responses]
+      end
 
     dispatch_command_array(rest, connection_info, updated_responses)
   end
@@ -57,7 +65,10 @@ defmodule Srh.Http.CommandHandler do
     {:ok, Enum.reverse(responses)}
   end
 
-  defp dispatch_command(command_array, %{"srh_id" => srh_id, "max_connections" => max_connections} = connection_info)
+  defp dispatch_command(
+         command_array,
+         %{"srh_id" => srh_id, "max_connections" => max_connections} = connection_info
+       )
        when is_number(max_connections) do
     case GenRegistry.lookup_or_start(Client, srh_id, [max_connections, connection_info]) do
       {:ok, pid} ->
@@ -66,16 +77,16 @@ defmodule Srh.Http.CommandHandler do
              |> ClientWorker.redis_command(command_array) do
           {:ok, res} ->
             {:ok, %{result: res}}
+
           {:error, error} ->
             {
               :malformed_data,
-              Jason.encode!(
-                %{
-                  error: error.message
-                }
-              )
+              Jason.encode!(%{
+                error: error.message
+              })
             }
         end
+
       {:error, msg} ->
         {:server_error, msg}
     end

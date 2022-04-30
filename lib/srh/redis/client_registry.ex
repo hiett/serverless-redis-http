@@ -35,12 +35,14 @@ defmodule Srh.Redis.ClientRegistry do
       len ->
         target = state.last_worker_index + 1
 
-        corrected_target = case target >= len do
-          true -> 0
-          false -> target
-        end
+        corrected_target =
+          case target >= len do
+            true -> 0
+            false -> target
+          end
 
-        {:reply, {:ok, Enum.at(state.worker_pids, corrected_target)}, %{state | last_worker_index: corrected_target}}
+        {:reply, {:ok, Enum.at(state.worker_pids, corrected_target)},
+         %{state | last_worker_index: corrected_target}}
     end
   end
 
@@ -55,10 +57,9 @@ defmodule Srh.Redis.ClientRegistry do
       :noreply,
       %{
         state
-      |
-        worker_pids:
-          [pid | state.worker_pids]
-          |> Enum.uniq()
+        | worker_pids:
+            [pid | state.worker_pids]
+            |> Enum.uniq()
       }
     }
   end

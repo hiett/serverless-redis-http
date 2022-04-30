@@ -23,7 +23,7 @@ defmodule Srh.Redis.Client do
     }
   end
 
-  def find_worker(client)  do
+  def find_worker(client) do
     GenServer.call(client, {:find_worker})
   end
 
