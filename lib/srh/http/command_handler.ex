@@ -14,12 +14,47 @@ defmodule Srh.Http.CommandHandler do
     end
   end
 
+  def handle_command_array(conn, token) do
+    case RequestValidator.validate_pipeline_redis_body(conn.body_params) do
+      {:ok, array_of_command_arrays} ->
+        IO.inspect(array_of_command_arrays)
+        do_handle_command_array(array_of_command_arrays, token)
+      {:error, error_message} ->
+        {:malformed_data, error_message}
+    end
+  end
+
   defp do_handle_command(command_array, token) do
     case TokenResolver.resolve(token) do
       {:ok, connection_info} ->
         dispatch_command(command_array, connection_info)
       {:error, msg} -> {:not_authorized, msg}
     end
+  end
+
+  defp do_handle_command_array(array_of_command_arrays, token) do
+    case TokenResolver.resolve(token) do
+      {:ok, connection_info} ->
+        dispatch_command_array(array_of_command_arrays, connection_info)
+      {:error, msg} -> {:not_authorized, msg}
+    end
+  end
+
+  defp dispatch_command_array([current | rest], connection_info, responses \\ []) do
+    updated_responses = case dispatch_command(current, connection_info) do
+      {:ok, result_map} ->
+        [result_map | responses]
+      {:malformed_data, result_json} ->
+        # TODO: change up the chain to json this at the last moment, so this isn't here
+        [Jason.decode!(result_json) | responses]
+    end
+
+    dispatch_command_array(rest, connection_info, updated_responses)
+  end
+
+  defp dispatch_command_array([], connection_info, responses) do
+    # The responses will be in reverse order, as we're adding them to the list with the faster method of putting them at head.
+    {:ok, Enum.reverse(responses)}
   end
 
   defp dispatch_command(command_array, %{"srh_id" => srh_id, "max_connections" => max_connections} = connection_info)
