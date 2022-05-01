@@ -21,7 +21,7 @@ Soon I will add specific documentation for the endpoints so you can implement cl
 
 ## Installation
 You have to options to run this:
-- Via docker: `docker pull hiett/serverless-redis-http:latest`
+- Via docker: `docker pull hiett/serverless-redis-http:latest` [Docker Hub link](https://hub.docker.com/r/hiett/serverless-redis-http)
 - Via elixir: `(clone this repo)` -> `mix deps.get` -> `iex -S mix`
 
 If you are running via Docker, you will need to mount the configuration file to `/app/srh-config/tokens.json`.\
