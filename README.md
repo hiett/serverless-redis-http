@@ -20,10 +20,16 @@ You can read about it here: [Upstash Redis GitHub](https://github.com/upstash/up
 Soon I will add specific documentation for the endpoints so you can implement clients in other languages.
 
 ## Installation
-Soon, I will provide a Docker container for this. Right now, you need Elixir 1.13+ installed. Clone down the repo, then run:
-`mix deps.get`
-then
-`iex -S mix`
+You have to options to run this:
+- Via docker: `docker pull hiett/serverless-redis-http:latest`
+- Via elixir: `(clone this repo)` -> `mix deps.get` -> `iex -S mix`
+
+If you are running via Docker, you will need to mount the configuration file to `/app/srh-config/tokens.json`.\
+An example of a run command is the following:
+
+`docker run -it -d -p 8080:80 --name srh --mount type=bind,source=$(pwd)/srh-config/tokens.json,target=/app/srh-config/tokens.json hiett/serverless-redis-http:latest`
+
+*Note that it is running on port 80*
 
 To configure Redis targets:\
 Create a file: `srh-config/tokens.json`
