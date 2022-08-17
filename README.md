@@ -1,4 +1,34 @@
 # SRH: Serverless Redis HTTP
+
+---
+
+**TLDR: If you want to run a local Upstash-compatible HTTP layer in front of your Redis:**
+
+0) Have a locally running Redis instance - in this example bound to the default port 6379
+1) create a json file called tokens.json in a folder called srh-config (`srh-config/tokens.json`)
+2) paste this in:
+  ```json
+  {
+    "example_token": {
+        "srh_id": "some_unique_identifier",
+        "connection_string": "redis://localhost:6379",
+        "max_connections": 3
+    } 
+  }
+  ```
+3) Run this command:
+`docker run -it -d -p 8079:80 --name srh --mount type=bind,source=$(pwd)/srh-config/tokens.json,target=/app/srh-config/tokens.json hiett/serverless-redis-http:latest`
+4) Set this as your Upstash configuration
+```js
+import {Redis} from '@upstash/redis';
+
+export const redis = new Redis({
+	url: "http://localhost:8079",
+	token: "example_token",
+});
+```
+---
+
 A Redis connection pooler for serverless applications. This allows your serverless functions to talk to Redis via HTTP,
 while also not having to worry about the Redis max connection limits.
 
