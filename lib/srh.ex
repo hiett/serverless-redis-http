@@ -5,7 +5,7 @@ defmodule Srh do
 
   def start(_type, _args) do
     IO.puts("Using port #{@port}")
-    
+
     children = [
       Srh.Auth.TokenResolver,
       {GenRegistry, worker_module: Srh.Redis.Client},

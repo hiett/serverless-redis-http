@@ -1,4 +1,4 @@
 import Config
 
 config :srh,
-       port: 80
+  port: 80

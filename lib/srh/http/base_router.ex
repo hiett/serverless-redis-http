@@ -23,6 +23,12 @@ defmodule Srh.Http.BaseRouter do
     |> handle_response(conn)
   end
 
+  post "/multi-exec" do
+    conn
+    |> handle_extract_auth(&CommandHandler.handle_command_transaction_array(conn, &1))
+    |> handle_response(conn)
+  end
+
   match _ do
     send_resp(conn, 404, "Endpoint not found")
   end
@@ -50,6 +56,9 @@ defmodule Srh.Http.BaseRouter do
 
         {:malformed_data, message} ->
           %{code: 400, message: message, json: false}
+
+        {:redis_error, data} ->
+          %{code: 400, message: Jason.encode!(data), json: true}
 
         {:not_authorized, message} ->
           %{code: 401, message: message, json: false}
