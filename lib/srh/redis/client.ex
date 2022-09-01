@@ -27,6 +27,14 @@ defmodule Srh.Redis.Client do
     GenServer.call(client, {:find_worker})
   end
 
+  def borrow_worker(client) do
+    GenServer.call(client, {:borrow_worker})
+  end
+
+  def return_worker(client, pid) do
+    GenServer.cast(client, {:return_worker, pid})
+  end
+
   def handle_call({:find_worker}, _from, %{registry_pid: registry_pid} = state)
       when is_pid(registry_pid) do
     {:ok, worker} = ClientRegistry.find_worker(registry_pid)
@@ -34,8 +42,21 @@ defmodule Srh.Redis.Client do
     {:reply, worker, state}
   end
 
+  def handle_call({:borrow_worker}, _from, %{registry_pid: registry_pid} = state)
+      when is_pid(registry_pid) do
+    {:ok, worker} = ClientRegistry.borrow_worker(registry_pid)
+    Process.send(self(), :reset_idle_death, [])
+    {:reply, worker, state}
+  end
+
   def handle_call(_msg, _from, state) do
     {:reply, :ok, state}
+  end
+
+  def handle_cast({:return_worker, pid}, %{registry_pid: registry_pid} = state)
+      when is_pid(pid) and is_pid(registry_pid) do
+    ClientRegistry.return_worker(registry_pid, pid)
+    {:noreply, state}
   end
 
   def handle_cast(_msg, state) do
