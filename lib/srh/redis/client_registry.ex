@@ -48,9 +48,10 @@ defmodule Srh.Redis.ClientRegistry do
           {:ok, pid},
           %{
             state_update
-            | currently_borrowed_pids:
-                [pid | state_update.currently_borrowed_pids]
-                |> Enum.uniq()
+          |
+            currently_borrowed_pids:
+              [pid | state_update.currently_borrowed_pids]
+              |> Enum.uniq()
           }
         }
     end
@@ -72,16 +73,17 @@ defmodule Srh.Redis.ClientRegistry do
       :noreply,
       %{
         state
-        | worker_pids:
-            [pid | state.worker_pids]
-            |> Enum.uniq()
+      |
+        worker_pids:
+          [pid | state.worker_pids]
+          |> Enum.uniq()
       }
     }
   end
 
   def handle_cast({:destroy_workers}, state) do
     for worker_pid <- state.worker_pids do
-      Process.exit(worker_pid, :normal)
+      Srh.Redis.ClientWorker.destroy_redis(worker_pid)
     end
 
     {:noreply, %{state | worker_pids: [], last_worker_index: 0}}
@@ -89,8 +91,10 @@ defmodule Srh.Redis.ClientRegistry do
 
   def handle_cast({:return_worker, pid}, state) do
     # Remove it from the borrowed array
-    {:noreply,
-     %{state | currently_borrowed_pids: List.delete(state.currently_borrowed_pids, pid)}}
+    {
+      :noreply,
+      %{state | currently_borrowed_pids: List.delete(state.currently_borrowed_pids, pid)}
+    }
   end
 
   def handle_cast(_msg, state) do

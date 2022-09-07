@@ -21,6 +21,10 @@ defmodule Srh.Redis.ClientWorker do
     GenServer.call(worker, {:redis_command, command_array})
   end
 
+  def destroy_redis(worker) do
+    GenServer.cast(worker, {:destroy_redis})
+  end
+
   def handle_call({:redis_command, command_array}, _from, %{redix_pid: redix_pid} = state)
       when is_pid(redix_pid) do
     case Redix.command(redix_pid, command_array) do
@@ -34,6 +38,14 @@ defmodule Srh.Redis.ClientWorker do
 
   def handle_call(_msg, _from, state) do
     {:reply, :ok, state}
+  end
+
+  def handle_cast({:destroy_redis}, %{redix_pid: redix_pid} = state) when is_pid(redix_pid) do
+    # Destroy the redis instance & ensure cleanup
+    Redix.stop(redix_pid)
+    Process.exit(redix_pid, :normal)
+
+    {:stop, :normal, %{state | redix_pid: nil}}
   end
 
   def handle_cast(_msg, state) do
