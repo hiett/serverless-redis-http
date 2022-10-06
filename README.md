@@ -72,6 +72,28 @@ Create a file: `srh-config/tokens.json`
     } 
 }
 ```
+
+### Docker Compose
+You'll want the above `tokens.json` file but use this as your connection string:
+```json
+"connection_string": "redis://redis:6379"
+```
+docker-compose.yaml
+```yaml
+version: '3'
+services:
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
+  serverless-redis-http:
+    ports:
+      - '8079:80'
+    image: hiett/serverless-redis-http:latest
+    volumes:
+      - ./path/to/tokens.json:/app/srh-config/tokens.json
+```
+
 Notes: 
 - Srh_id can be anything you want, as long as it's a string, and unique.
 - `max_connections` is the maximum number of connections for the pool.
