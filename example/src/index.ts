@@ -6,6 +6,9 @@ const redis = new Redis({
 
   // The token you defined in tokens.json
   token: "example_token",
+
+  // Response encoding is supported (this is enabled by default)
+  responseEncoding: true,
 });
 
 (async () => {

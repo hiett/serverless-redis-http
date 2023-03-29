@@ -25,7 +25,6 @@ import {Redis} from '@upstash/redis';
 export const redis = new Redis({
     url: "http://localhost:8079",
     token: "example_token",
-    responseEncoding: false, // IMPORTANT: Upstash has recently added response encoding, but SRH does not support it yet.
 });
 ```
 ---
@@ -42,6 +41,7 @@ this via HTTP.
 - Automatically kills redis connections after inactivity
 - Supports multiple redis instances, and you can configure unique tokens for each
 - Fully supports the `@upstash/redis` TypeScript library.
+- Works inside of GitHub Action's services, so you can run it alongside Redis in your tests.
 
 ## Client usage
 This will not work with regular Redis clients, as it is over HTTP and not the redis protocol.
@@ -73,6 +73,14 @@ Create a file: `srh-config/tokens.json`
     } 
 }
 ```
+
+Alternatively, if you are connecting to just one Redis server, you can use environment variables to set the target.
+```
+SRH_MODE="env"
+SRH_TOKEN="example_token"
+SRH_CONNECTION_STRING="redis://redis:6379"
+```
+If you use this strategy, it's important that you set `SRH_MODE=env`. This is because SRH by default uses the file strategy for backwards-compatability.
 
 ### Docker Compose
 You'll want the above `tokens.json` file but use this as your connection string:
