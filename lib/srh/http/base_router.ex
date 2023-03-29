@@ -2,6 +2,7 @@ defmodule Srh.Http.BaseRouter do
   use Plug.Router
   alias Srh.Http.RequestValidator
   alias Srh.Http.CommandHandler
+  alias Srh.Http.ResultEncoder
 
   plug(:match)
   plug(Plug.Parsers, parsers: [:json], pass: ["application/json"], json_decoder: Jason)
@@ -12,25 +13,28 @@ defmodule Srh.Http.BaseRouter do
   end
 
   post "/" do
-    conn
-    |> handle_extract_auth(&CommandHandler.handle_command(conn, &1))
-    |> handle_response(conn)
+    do_command_request(conn, &CommandHandler.handle_command(&1, &2))
   end
 
   post "/pipeline" do
-    conn
-    |> handle_extract_auth(&CommandHandler.handle_command_array(conn, &1))
-    |> handle_response(conn)
+    do_command_request(conn, &CommandHandler.handle_command_array(&1, &2))
   end
 
   post "/multi-exec" do
-    conn
-    |> handle_extract_auth(&CommandHandler.handle_command_transaction_array(conn, &1))
-    |> handle_response(conn)
+    do_command_request(conn, &CommandHandler.handle_command_transaction_array(&1, &2))
   end
 
   match _ do
     send_resp(conn, 404, "Endpoint not found")
+  end
+
+  defp do_command_request(conn, success_lambda) do
+    encoding_enabled = handle_extract_encoding(conn)
+
+    conn
+    |> handle_extract_auth(&success_lambda.(conn, &1))
+    |> handle_encoding_step(encoding_enabled)
+    |> handle_response(conn)
   end
 
   defp handle_extract_auth(conn, success_lambda) do
@@ -42,6 +46,24 @@ defmodule Srh.Http.BaseRouter do
 
       {:error, _} ->
         {:malformed_data, "Missing/Invalid authorization header"}
+    end
+  end
+
+  defp handle_extract_encoding(conn) do
+    case conn
+         |> get_req_header("upstash-encoding")
+         |> RequestValidator.validate_encoding_header() do
+      {:ok, _encoding_enabled} -> true
+      {:error, _} -> false # it's not required to be present
+    end
+  end
+
+  defp handle_encoding_step(response, encoding_enabled) do
+    case encoding_enabled do
+      true ->
+        # We need to use the encoder to
+        ResultEncoder.encode_response(response)
+      false -> response
     end
   end
 
