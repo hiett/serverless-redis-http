@@ -3,10 +3,13 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  SRH_TOKEN: example_token
+
 jobs:
   container-job:
     runs-on: ubuntu-latest
-    container: node:18
+    container: denoland/deno
     services:
       redis:
         image: redis:6.2 # 6.2 is the Upstash compatible Redis version
@@ -14,19 +17,17 @@ jobs:
         image: hiett/serverless-redis-http:0.0.5-alpha
         env:
           SRH_MODE: env
-          SRH_TOKEN: example_token
+          SRH_TOKEN: ${{ env.SRH_TOKEN }}
           SRH_CONNECTION_STRING: redis://redis:6379
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          name: upstash/upstash-redis
 
-      - name: Install dependencies
-        working-directory: ./example
-        run: yarn install
-
-      - name: Run script
-        working-directory: ./example
-        run: yarn start
+      - name: Run @upstash/redis Test Suite
+        run: deno test -A ./pkg
         env:
-          REDIS_CONNECTION_URL: http://srh:80
+          UPSTASH_REDIS_REST_URL: http://srh:80
+          UPSTASH_REDIS_REST_TOKEN: ${{ env.SRH_TOKEN }}
