@@ -14,7 +14,7 @@ jobs:
           - 6379:6379
       srh:
         image: hiett/serverless-redis-http:0.0.5-alpha
-        environment:
+        env:
           SRH_MODE: env
           SRH_TOKEN: example_token
           SRH_CONNECTION_STRING: redis://redis:6379
