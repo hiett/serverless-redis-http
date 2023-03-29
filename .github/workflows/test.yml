@@ -10,16 +10,12 @@ jobs:
     services:
       redis:
         image: redis:6.2 # 6.2 is the Upstash compatible Redis version
-        ports:
-          - 6379:6379
       srh:
         image: hiett/serverless-redis-http:0.0.5-alpha
         env:
           SRH_MODE: env
           SRH_TOKEN: example_token
           SRH_CONNECTION_STRING: redis://redis:6379
-        ports:
-          - 8080:80
 
     steps:
       - name: Checkout code
@@ -32,3 +28,5 @@ jobs:
       - name: Run script
         working-directory: ./example
         run: yarn start
+        env:
+          REDIS_CONNECTION_URL: http://srh:80
