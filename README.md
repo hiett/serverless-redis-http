@@ -8,13 +8,13 @@
 1) create a json file called tokens.json in a folder called srh-config (`srh-config/tokens.json`)
 2) paste this in:
   ```json
-  {
+{
     "example_token": {
         "srh_id": "some_unique_identifier",
         "connection_string": "redis://localhost:6379",
         "max_connections": 3
     } 
-  }
+}
   ```
 3) Run this command:
 `docker run -it -d -p 8079:80 --name srh --mount type=bind,source=$(pwd)/srh-config/tokens.json,target=/app/srh-config/tokens.json hiett/serverless-redis-http:latest`
@@ -23,8 +23,8 @@
 import {Redis} from '@upstash/redis';
 
 export const redis = new Redis({
-	url: "http://localhost:8079",
-	token: "example_token",
+    url: "http://localhost:8079",
+    token: "example_token",
     responseEncoding: false, // IMPORTANT: Upstash has recently added response encoding, but SRH does not support it yet.
 });
 ```
