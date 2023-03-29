@@ -33,8 +33,11 @@ jobs:
       - name: Check Deno version
         run: deno info      
 
+      - name: Check installed
+        run: ls
+
       - name: Run @upstash/redis Test Suite
-        run: deno test -A
+        run: deno test -A ./pkg
         env:
           UPSTASH_REDIS_REST_URL: http://srh:80
           UPSTASH_REDIS_REST_TOKEN: ${{ env.SRH_TOKEN }}
