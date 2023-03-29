@@ -24,17 +24,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          name: upstash/upstash-redis
+          repository: upstash/upstash-redis
 
       # - uses: denoland/setup-deno@v1
       #   with:
       #     deno-version: v1.x
-
-      - name: Check Deno version
-        run: deno info      
-
-      - name: Check installed
-        run: ls
 
       - name: Run @upstash/redis Test Suite
         run: deno test -A ./pkg
