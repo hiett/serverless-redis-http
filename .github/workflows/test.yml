@@ -26,10 +26,6 @@ jobs:
         with:
           repository: upstash/upstash-redis
 
-      # - uses: denoland/setup-deno@v1
-      #   with:
-      #     deno-version: v1.x
-
       - name: Run @upstash/redis Test Suite
         run: deno test -A ./pkg
         env:

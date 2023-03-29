@@ -1,15 +1,17 @@
 import {Redis} from "@upstash/redis";
 
 const redis = new Redis({
+  // The URL of the SRH instance
   url: "http://127.0.0.1:8080",
+
+  // The token you defined in tokens.json
   token: "example_token",
-  // responseEncoding: true,
 });
 
 (async () => {
-  // await redis.set("key", "value");
+  await redis.set("foo", "bar");
   const value = await redis.get("foo");
-  console.log(value); // value
+  console.log(value);
 
   // Run a pipeline operation
   const pipelineResponse = await redis.pipeline()
@@ -20,9 +22,15 @@ const redis = new Redis({
     .srandmember("random-key-that-doesnt-exist")
     .sadd("amazing-set", "item1", "item2", "item3", "bar", "foo", "example")
     .smembers("amazing-set")
-    // .evalsha("aijsojiasd", [], [])
     .get("foo")
     .exec();
 
   console.log(pipelineResponse);
+
+  const multiExecResponse = await redis.multi()
+    .set("example", "value")
+    .get("example")
+    .exec();
+
+  console.log(multiExecResponse);
 })();
