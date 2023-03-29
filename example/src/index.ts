@@ -1,7 +1,7 @@
 import {Redis} from "@upstash/redis";
 
 const redis = new Redis({
-  url: "http://localhost:8080",
+  url: process.env.REDIS_CONNECTION_URL,
   token: "example_token",
   responseEncoding: false,
 });
