@@ -25,6 +25,7 @@ import {Redis} from '@upstash/redis';
 export const redis = new Redis({
 	url: "http://localhost:8079",
 	token: "example_token",
+    responseEncoding: false, // IMPORTANT: Upstash has recently added response encoding, but SRH does not support it yet.
 });
 ```
 ---
