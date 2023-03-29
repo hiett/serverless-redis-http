@@ -9,7 +9,7 @@ env:
 jobs:
   container-job:
     runs-on: ubuntu-latest
-    container: denoland/deno
+    container: node:18
     services:
       redis:
         image: redis:6.2 # 6.2 is the Upstash compatible Redis version
