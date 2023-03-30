@@ -29,7 +29,7 @@ defmodule Srh.Http.BaseRouter do
   end
 
   defp do_command_request(conn, success_lambda) do
-    encoding_enabled = handle_extract_encoding(conn)
+    encoding_enabled = handle_extract_encoding?(conn)
 
     conn
     |> handle_extract_auth(&success_lambda.(conn, &1))
@@ -49,7 +49,7 @@ defmodule Srh.Http.BaseRouter do
     end
   end
 
-  defp handle_extract_encoding(conn) do
+  defp handle_extract_encoding?(conn) do
     case conn
          |> get_req_header("upstash-encoding")
          |> RequestValidator.validate_encoding_header() do
