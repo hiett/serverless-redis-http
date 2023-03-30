@@ -1,9 +1,9 @@
 name: Test @upstash/redis compatability
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'lib/**'
-  workflow_dispatch:
   schedule:
     - cron: '0 12 * * *'
 
