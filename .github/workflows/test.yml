@@ -4,6 +4,8 @@ on:
     paths:
       - 'lib/**'
   workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * *'
 
 env:
   SRH_TOKEN: example_token
