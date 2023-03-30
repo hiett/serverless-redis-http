@@ -1,7 +1,6 @@
 defmodule Srh.Auth.TokenResolver do
   use GenServer
 
-  @mode Application.fetch_env!(:srh, :mode)
   @file_path Application.fetch_env!(:srh, :file_path)
 
   @ets_table_name :srh_token_resolver
@@ -25,7 +24,7 @@ defmodule Srh.Auth.TokenResolver do
     table = :ets.new(@ets_table_name, [:named_table, read_concurrency: true])
 
     # Populate the ETS table with data from storage
-    do_init_load(@mode)
+    do_init_load(get_token_loader_mode())
 
     {
       :ok,
@@ -36,7 +35,7 @@ defmodule Srh.Auth.TokenResolver do
   end
 
   def resolve(token) do
-    do_resolve(@mode, token)
+    do_resolve(get_token_loader_mode(), token)
   end
 
   # Server methods
@@ -49,6 +48,10 @@ defmodule Srh.Auth.TokenResolver do
   end
 
   # Internal server
+  defp get_token_loader_mode() do
+    System.get_env("SRH_MODE", "file")
+  end
+
   defp do_init_load("file") do
     config_file_data = Jason.decode!(File.read!(@file_path))
     IO.puts("Loaded config file from disk. #{map_size(config_file_data)} entries.")
@@ -57,6 +60,25 @@ defmodule Srh.Auth.TokenResolver do
       config_file_data,
       &:ets.insert(@ets_table_name, &1)
     )
+  end
+
+  defp do_init_load("env") do
+    srh_token = System.get_env("SRH_TOKEN")
+    srh_connection_string = System.get_env("SRH_CONNECTION_STRING")
+
+    # Returns an error if fails, first tuple value is the number
+    {srh_max_connections, ""} = Integer.parse(System.get_env("SRH_MAX_CONNECTIONS", "3"))
+
+    # Create a config-file-like structure that the ETS layout expects, with just one entry
+    config_file_data = Map.put(%{}, srh_token, %{
+      "srh_id" => "env_config_connection", # Jason.parse! expects these keys to be strings, not atoms, so we need to replicate that setup
+      "connection_string" => srh_connection_string,
+      "max_connections" => srh_max_connections
+    })
+
+    IO.puts("Loaded config from env. #{map_size(config_file_data)} entries.")
+    # Load this into ETS
+    Enum.each(config_file_data, &:ets.insert(@ets_table_name, &1))
   end
 
   defp do_init_load(_), do: :ok
@@ -72,6 +94,9 @@ defmodule Srh.Auth.TokenResolver do
       [] -> {:error, "Invalid token"}
     end
   end
+
+  # The env strategy uses the same ETS table as the file strategy, so we can fall back on that
+  defp do_resolve("env", token), do: do_resolve("file", token)
 
   defp do_resolve("redis", _token) do
     {

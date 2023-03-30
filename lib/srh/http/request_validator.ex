@@ -26,6 +26,21 @@ defmodule Srh.Http.RequestValidator do
 
   defp do_validate_pipeline_item(_), do: :error
 
+  def validate_encoding_header(header_value_array) when is_list(header_value_array) do
+    do_validate_encoding_header(header_value_array)
+  end
+
+  # This has been broken up like this to future-proof different encoding modes in the future
+  defp do_validate_encoding_header([first_item | rest]) do
+    case first_item do
+      "base64" -> {:ok, true}
+
+      _ -> do_validate_encoding_header(rest)
+    end
+  end
+
+  defp do_validate_encoding_header([]), do: {:error, :not_found}
+
   def validate_bearer_header(header_value_array) when is_list(header_value_array) do
     do_validate_bearer_header(header_value_array)
   end
