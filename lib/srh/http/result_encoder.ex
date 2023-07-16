@@ -1,5 +1,10 @@
 defmodule Srh.Http.ResultEncoder do
 
+  # Authentication errors don't get encoded, we need to skip over those
+  def encode_response({:not_authorized, message}) do
+    {:not_authorized, message}
+  end
+
   # Errors don't get encoded, we need to skip over those
   def encode_response({:redis_error, error_result_map}) do
     {:redis_error, error_result_map}
