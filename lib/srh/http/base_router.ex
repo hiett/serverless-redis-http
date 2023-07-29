@@ -54,7 +54,8 @@ defmodule Srh.Http.BaseRouter do
          |> get_req_header("upstash-encoding")
          |> RequestValidator.validate_encoding_header() do
       {:ok, _encoding_enabled} -> true
-      {:error, _} -> false # it's not required to be present
+      # it's not required to be present
+      {:error, _} -> false
     end
   end
 
@@ -63,7 +64,9 @@ defmodule Srh.Http.BaseRouter do
       true ->
         # We need to use the encoder to
         ResultEncoder.encode_response(response)
-      false -> response
+
+      false ->
+        response
     end
   end
 
@@ -84,6 +87,9 @@ defmodule Srh.Http.BaseRouter do
 
         {:not_authorized, message} ->
           %{code: 401, message: message, json: false}
+
+        {:connection_error, message} ->
+          %{code: 500, message: message, json: false}
 
         {:server_error, _} ->
           %{code: 500, message: "An error occurred internally", json: false}

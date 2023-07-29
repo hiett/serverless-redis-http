@@ -99,39 +99,43 @@ defmodule Srh.Http.CommandHandler do
         do_dispatch_command_transaction_array(wrapped_command_array, worker_pid, responses)
 
         # Now manually run the EXEC - this is what contains the information to form the response, not the above
-        result = case ClientWorker.redis_command(worker_pid, ["EXEC"]) do
-          {:ok, res} ->
-            {
-              :ok,
-              res
-              |> Enum.map(&(%{result: &1}))
-            }
-          # TODO: Can there be any inline errors here? Wouldn't they fail the whole tx?
+        result =
+          case ClientWorker.redis_command(worker_pid, ["EXEC"]) do
+            {:ok, res} ->
+              {
+                :ok,
+                res
+                |> Enum.map(&%{result: &1})
+              }
 
-          {:error, error} ->
-            {:redis_error, %{error: error.message}}
-        end
+            {:error, error} ->
+              decode_error(error)
+          end
 
         Client.return_worker(client_pid, worker_pid)
 
         result
+
       {:error, msg} ->
         {:server_error, msg}
     end
   end
 
-  defp do_dispatch_command_transaction_array([current | rest], worker_pid, responses) when is_pid(worker_pid) do
-    updated_responses = case ClientWorker.redis_command(worker_pid, current) do
-      {:ok, res} ->
-        [%{result: res} | responses]
+  defp do_dispatch_command_transaction_array([current | rest], worker_pid, responses)
+       when is_pid(worker_pid) do
+    updated_responses =
+      case ClientWorker.redis_command(worker_pid, current) do
+        {:ok, res} ->
+          [%{result: res} | responses]
 
-      {:error, error} ->
-        [
-          %{
-            error: error.message
-          } | responses
-        ]
-    end
+        {:error, error} ->
+          [
+            %{
+              error: error.message
+            }
+            | responses
+          ]
+      end
 
     do_dispatch_command_transaction_array(rest, worker_pid, updated_responses)
   end
@@ -154,16 +158,30 @@ defmodule Srh.Http.CommandHandler do
             {:ok, %{result: res}}
 
           {:error, error} ->
-            {
-              :redis_error,
-              %{
-                error: error.message
-              }
-            }
+            decode_error(error)
         end
 
       {:error, msg} ->
         {:server_error, msg}
+    end
+  end
+
+  # Figure out if it's an actual Redis error or a Redix error
+  defp decode_error(error) do
+    case error do
+      %{reason: :closed} ->
+        {
+          :connection_error,
+          "Unable to connect to the Redis server"
+        }
+
+      _ ->
+        {
+          :redis_error,
+          %{
+            error: error.message
+          }
+        }
     end
   end
 end

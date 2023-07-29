@@ -52,7 +52,6 @@ defmodule Srh.Redis.ClientWorker do
     {:noreply, state}
   end
 
-  # TODO: Handle host / port connections
   def handle_info(
         :create_connection,
         %{
@@ -62,6 +61,7 @@ defmodule Srh.Redis.ClientWorker do
         } = state
       )
       when is_binary(connection_string) do
+    # Will cause a crash for this genserver if the connection fails
     {:ok, pid} = Redix.start_link(connection_string)
     {:noreply, %{state | redix_pid: pid}}
   end
