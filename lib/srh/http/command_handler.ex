@@ -95,26 +95,35 @@ defmodule Srh.Http.CommandHandler do
         # Borrow a client, then run all of the commands (wrapped in MULTI and EXEC)
         worker_pid = Client.borrow_worker(client_pid)
 
-        wrapped_command_array = [["MULTI"] | command_array]
-        do_dispatch_command_transaction_array(wrapped_command_array, worker_pid, responses)
+        # We are manually going to invoke the MULTI, because there might be a connection error to the Redis server.
+        # In that case, we don't want the error to be wound up in the array of errors,
+        # we instead want to return the error immediately.
+        case ClientWorker.redis_command(worker_pid, ["MULTI"]) do
+          {:ok, _} ->
+            do_dispatch_command_transaction_array(command_array, worker_pid, responses)
 
-        # Now manually run the EXEC - this is what contains the information to form the response, not the above
-        result =
-          case ClientWorker.redis_command(worker_pid, ["EXEC"]) do
-            {:ok, res} ->
-              {
-                :ok,
-                res
-                |> Enum.map(&%{result: &1})
-              }
+            # Now manually run the EXEC - this is what contains the information to form the response, not the above
+            result =
+              case ClientWorker.redis_command(worker_pid, ["EXEC"]) do
+                {:ok, res} ->
+                  {
+                    :ok,
+                    res
+                    |> Enum.map(&%{result: &1})
+                  }
 
-            {:error, error} ->
-              decode_error(error)
-          end
+                {:error, error} ->
+                  decode_error(error)
+              end
 
-        Client.return_worker(client_pid, worker_pid)
+            Client.return_worker(client_pid, worker_pid)
 
-        result
+            # Fire back the result here, because the initial Multi was successful
+            result
+
+          {:error, error} ->
+            decode_error(error)
+        end
 
       {:error, msg} ->
         {:server_error, msg}

@@ -1,5 +1,4 @@
 defmodule Srh.Http.ResultEncoder do
-
   # Authentication errors don't get encoded, we need to skip over those
   def encode_response({:not_authorized, message}) do
     {:not_authorized, message}
@@ -27,12 +26,16 @@ defmodule Srh.Http.ResultEncoder do
   ## RESULT LIST ENCODING ##
 
   defp encode_response_list([current | rest], encoded_responses) do
-    encoded_current_entry = case current do
-      %{result: value} ->
-        %{result: encode_result_value(value)} # Encode the value
-      %{error: error_message} ->
-        %{error: error_message} # We don't encode errors
-    end
+    encoded_current_entry =
+      case current do
+        %{result: value} ->
+          # Encode the value
+          %{result: encode_result_value(value)}
+
+        %{error: error_message} ->
+          # We don't encode errors
+          %{error: error_message}
+      end
 
     encode_response_list(rest, [encoded_current_entry | encoded_responses])
   end
