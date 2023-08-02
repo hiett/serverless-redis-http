@@ -9,6 +9,10 @@ defmodule Srh.Http.ResultEncoder do
     {:redis_error, error_result_map}
   end
 
+  def encode_response({:connection_error, error_result_map}) do
+    {:connection_error, error_result_map}
+  end
+
   # List-based responses, they will contain multiple entries
   # It's important to note that this is DIFFERENT from a list of values,
   # as it's a list of separate command responses. Each is a map that either

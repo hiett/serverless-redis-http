@@ -73,11 +73,20 @@ defmodule Srh.Http.CommandHandler do
         {:ok, result_map} ->
           [result_map | responses]
 
+        {:connection_error, result} ->
+          {:connection_error, result}
+
         {:redis_error, result} ->
           [result | responses]
       end
 
-    dispatch_command_array(rest, connection_info, updated_responses)
+    case updated_responses do
+      {:connection_error, result} ->
+        {:connection_error, result}
+
+      _ ->
+        dispatch_command_array(rest, connection_info, updated_responses)
+    end
   end
 
   defp dispatch_command_array([], _connection_info, responses) do
@@ -113,7 +122,7 @@ defmodule Srh.Http.CommandHandler do
                   }
 
                 {:error, error} ->
-                  decode_error(error)
+                  decode_error(error, srh_id)
               end
 
             Client.return_worker(client_pid, worker_pid)
@@ -122,7 +131,7 @@ defmodule Srh.Http.CommandHandler do
             result
 
           {:error, error} ->
-            decode_error(error)
+            decode_error(error, srh_id)
         end
 
       {:error, msg} ->
@@ -167,7 +176,7 @@ defmodule Srh.Http.CommandHandler do
             {:ok, %{result: res}}
 
           {:error, error} ->
-            decode_error(error)
+            decode_error(error, srh_id)
         end
 
       {:error, msg} ->
@@ -176,9 +185,13 @@ defmodule Srh.Http.CommandHandler do
   end
 
   # Figure out if it's an actual Redis error or a Redix error
-  defp decode_error(error) do
+  defp decode_error(error, srh_id) do
     case error do
       %{reason: :closed} ->
+        IO.puts(
+          "WARNING: SRH was unable to connect to the Redis server. Please make sure it is running, and the connection information is correct. SRH ID: #{srh_id}"
+        )
+
         {
           :connection_error,
           "Unable to connect to the Redis server"
