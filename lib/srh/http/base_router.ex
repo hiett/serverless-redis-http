@@ -97,7 +97,7 @@ defmodule Srh.Http.BaseRouter do
           {500, {:error, message}}
 
         _ ->
-          {500, {:error, "An error occurred internally"}}
+          {500, {:error, "SRH: An error occurred internally"}}
       end
 
     conn
