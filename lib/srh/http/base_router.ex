@@ -5,6 +5,7 @@ defmodule Srh.Http.BaseRouter do
   alias Srh.Http.ResultEncoder
 
   plug(:match)
+  plug(Srh.Http.ContentTypeCheckPlug)
   plug(Plug.Parsers, parsers: [:json], pass: ["application/json"], json_decoder: Jason)
   plug(:dispatch)
 
