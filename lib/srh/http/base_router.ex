@@ -5,6 +5,7 @@ defmodule Srh.Http.BaseRouter do
   alias Srh.Http.ResultEncoder
 
   plug(:match)
+  plug(Srh.Http.ContentTypeCheckPlug)
   plug(Plug.Parsers, parsers: [:json], pass: ["application/json"], json_decoder: Jason)
   plug(:dispatch)
 
@@ -25,7 +26,7 @@ defmodule Srh.Http.BaseRouter do
   end
 
   match _ do
-    send_resp(conn, 404, "Endpoint not found")
+    handle_response({:not_found, "SRH: Endpoint not found. SRH might not support this feature yet."}, conn)
   end
 
   defp do_command_request(conn, success_lambda) do
@@ -71,41 +72,42 @@ defmodule Srh.Http.BaseRouter do
   end
 
   defp handle_response(response, conn) do
-    %{code: code, message: message, json: json} =
+    # Errors are strings, and data just means the content is directly encoded with Jason.encode!
+    # {404, {:error, "Message"}}
+    # {200, {:data, ""}}
+
+    {code, resp_data} =
       case response do
         {:ok, data} ->
-          %{code: 200, message: Jason.encode!(data), json: true}
+          {200, {:data, data}}
 
         {:not_found, message} ->
-          %{code: 404, message: message, json: false}
+          {404, {:error, message}}
 
         {:malformed_data, message} ->
-          %{code: 400, message: message, json: false}
+          {400, {:error, message}}
 
         {:redis_error, data} ->
-          %{code: 400, message: Jason.encode!(data), json: true}
+          {400, {:data, data}}
 
         {:not_authorized, message} ->
-          %{code: 401, message: message, json: false}
+          {401, {:error, message}}
 
         {:connection_error, message} ->
-          %{code: 500, message: Jason.encode!(%{error: message}), json: true}
-
-        {:server_error, _} ->
-          %{code: 500, message: "An error occurred internally", json: false}
+          {500, {:error, message}}
 
         _ ->
-          %{code: 500, message: "An error occurred internally", json: false}
+          {500, {:error, "SRH: An error occurred internally"}}
       end
 
-    case json do
-      true ->
-        conn
-        |> put_resp_header("content-type", "application/json")
-
-      false ->
-        conn
-    end
-    |> send_resp(code, message)
+    conn
+    |> put_resp_header("content-type", "application/json")
+    |> send_resp(code, create_response_body(resp_data))
   end
+
+  # :data just directly encodes
+  defp create_response_body({:data, data}), do: Jason.encode!(data)
+
+  # :error wraps the message in an error object
+  defp create_response_body({:error, error}), do: Jason.encode!(%{error: error})
 end
