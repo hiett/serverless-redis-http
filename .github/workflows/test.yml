@@ -35,8 +35,6 @@ jobs:
     services:
       redis:
         image: redis/redis-stack-server:6.2.6-v6 # 6.2 is the Upstash compatible Redis version
-        ports:
-          - 6379:6379
 
     steps:
       - name: Checkout code
@@ -57,13 +55,19 @@ jobs:
       - name: Load SRH image
         run: |
           docker load --input /tmp/serverless-redis-http.tar
-          docker image ls -a
+          docker image ls -a | grep serverless-redis-http
 
+      # Placed inside the same docker network as the service container with job.container.network, at which point
+      # it can directly address Redis. We still need to expose SRH's port to the host machine, however, so that
+      # we can run tests against it.
       - name: Run SRH container
-        uses: addnab/docker-run-action@v3
-        with:
-          image: hiett/serverless-redis-http:latest
-          options: -it -d -p 8080:80 -e SRH_MODE=env -e SRH_TOKEN=${{ env.SRH_TOKEN }} -e SRH_CONNECTION_STRING="redis://redis:6379"
+        run: > 
+          docker run -it -d -p 8080:80 
+            --network ${{ job.container.network }} 
+            -e SRH_MODE=env 
+            -e SRH_TOKEN=${{ env.SRH_TOKEN }} 
+            -e SRH_CONNECTION_STRING="redis://redis:6379" 
+            hiett/serverless-redis-http:latest
 
       # The following tests fail because of bugs with Upstash's implementation of Redis, NOT because of our library
       # So we remove them from the test suite
