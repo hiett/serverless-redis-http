@@ -61,12 +61,12 @@ jobs:
       # it can directly address Redis. We still need to expose SRH's port to the host machine, however, so that
       # we can run tests against it.
       - name: Run SRH container
-        run: > 
-          docker run -it -d -p 8080:80 
-            --network ${{ job.container.network }} 
-            -e SRH_MODE=env 
-            -e SRH_TOKEN=${{ env.SRH_TOKEN }} 
-            -e SRH_CONNECTION_STRING="redis://redis:6379" 
+        run: \
+          docker run -it -d -p 8080:80 \ 
+            --network ${{ job.container.network }} \ 
+            -e SRH_MODE=env \
+            -e SRH_TOKEN=${{ env.SRH_TOKEN }} \ 
+            -e SRH_CONNECTION_STRING="redis://redis:6379" \ 
             hiett/serverless-redis-http:latest
 
       # The following tests fail because of bugs with Upstash's implementation of Redis, NOT because of our library
