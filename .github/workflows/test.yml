@@ -51,8 +51,8 @@ jobs:
 
       - name: Load SRH image
         run: |
-          docker load --input /tmp/serverless-redis-http.tar
-          docker image ls -a
+          /usr/bin/docker load --input /tmp/serverless-redis-http.tar
+          /usr/bin/docker image ls -a
 
       - name: Run SRH container
         uses: addnab/docker-run-action@v3
