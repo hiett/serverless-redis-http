@@ -25,7 +25,7 @@ defmodule Srh.Http.BaseRouter do
   end
 
   match _ do
-    send_resp(conn, 404, "Endpoint not found")
+    handle_response({:not_found, "SRH: Endpoint not found. SRH might not support this feature yet."}, conn)
   end
 
   defp do_command_request(conn, success_lambda) do
@@ -104,13 +104,9 @@ defmodule Srh.Http.BaseRouter do
     |> send_resp(code, create_response_body(resp_data))
   end
 
-  defp create_response_body({:data, data}) do
-    # Directly encode
-    Jason.encode!(data)
-  end
+  # :data just directly encodes
+  defp create_response_body({:data, data}), do: Jason.encode!(data)
 
-  defp create_response_body({:error, error}) do
-    # Wrap in error
-    Jason.encode!(%{error: error})
-  end
+  # :error wraps the message in an error object
+  defp create_response_body({:error, error}), do: Jason.encode!(%{error: error})
 end
