@@ -31,7 +31,7 @@ defmodule Srh.Http.ContentTypeCheckPlug do
         conn
 
       # Either missing, or a type that we don't support
-      other ->
+      _ ->
         # Return a custom error, ensuring the same format as the other errors
         conn
         |> put_resp_content_type("application/json")
