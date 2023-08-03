@@ -31,17 +31,22 @@ jobs:
 
   container-job:
     runs-on: ubuntu-latest
-    container: denoland/deno
     needs: build
     services:
       redis:
         image: redis/redis-stack-server:6.2.6-v6 # 6.2 is the Upstash compatible Redis version
+        ports:
+          - 6379:6379
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           repository: upstash/upstash-redis
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
 
       - name: Download SRH artifact
         uses: actions/download-artifact@v3
@@ -51,14 +56,14 @@ jobs:
 
       - name: Load SRH image
         run: |
-          /usr/bin/docker load --input /tmp/serverless-redis-http.tar
-          /usr/bin/docker image ls -a
+          docker load --input /tmp/serverless-redis-http.tar
+          docker image ls -a
 
       - name: Run SRH container
         uses: addnab/docker-run-action@v3
         with:
           image: hiett/serverless-redis-http:latest
-          options: -it -d -e SRH_MODE=env -e SRH_TOKEN=${{ env.SRH_TOKEN }} -e SRH_CONNECTION_STRING="redis://redis:6379"
+          options: -it -d -p 8080:80 -e SRH_MODE=env -e SRH_TOKEN=${{ env.SRH_TOKEN }} -e SRH_CONNECTION_STRING="redis://redis:6379"
 
       # The following tests fail because of bugs with Upstash's implementation of Redis, NOT because of our library
       # So we remove them from the test suite
@@ -71,5 +76,5 @@ jobs:
       - name: Run @upstash/redis Test Suite
         run: deno test -A ./pkg
         env:
-          UPSTASH_REDIS_REST_URL: http://srh:80
+          UPSTASH_REDIS_REST_URL: http://localhost:8080
           UPSTASH_REDIS_REST_TOKEN: ${{ env.SRH_TOKEN }}
