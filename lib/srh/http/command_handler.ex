@@ -194,7 +194,7 @@ defmodule Srh.Http.CommandHandler do
 
         {
           :connection_error,
-          "Unable to connect to the Redis server"
+          "SRH: Unable to connect to the Redis server. See SRH logs for more information."
         }
 
       _ ->

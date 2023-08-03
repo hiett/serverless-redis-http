@@ -89,7 +89,7 @@ defmodule Srh.Http.BaseRouter do
           %{code: 401, message: message, json: false}
 
         {:connection_error, message} ->
-          %{code: 500, message: message, json: false}
+          %{code: 500, message: Jason.encode!(%{error: message}), json: true}
 
         {:server_error, _} ->
           %{code: 500, message: "An error occurred internally", json: false}
