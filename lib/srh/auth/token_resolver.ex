@@ -70,11 +70,13 @@ defmodule Srh.Auth.TokenResolver do
     {srh_max_connections, ""} = Integer.parse(System.get_env("SRH_MAX_CONNECTIONS", "3"))
 
     # Create a config-file-like structure that the ETS layout expects, with just one entry
-    config_file_data = Map.put(%{}, srh_token, %{
-      "srh_id" => "env_config_connection", # Jason.parse! expects these keys to be strings, not atoms, so we need to replicate that setup
-      "connection_string" => srh_connection_string,
-      "max_connections" => srh_max_connections
-    })
+    config_file_data =
+      Map.put(%{}, srh_token, %{
+        # Jason.parse! expects these keys to be strings, not atoms, so we need to replicate that setup
+        "srh_id" => "env_config_connection",
+        "connection_string" => srh_connection_string,
+        "max_connections" => srh_max_connections
+      })
 
     IO.puts("Loaded config from env. #{map_size(config_file_data)} entries.")
     # Load this into ETS
@@ -98,17 +100,17 @@ defmodule Srh.Auth.TokenResolver do
   # The env strategy uses the same ETS table as the file strategy, so we can fall back on that
   defp do_resolve("env", token), do: do_resolve("file", token)
 
-  defp do_resolve("redis", _token) do
-    {
-      :ok,
-      # This is done to replicate what will eventually be API endpoints, so they keys are not atoms
-      Jason.decode!(
-        Jason.encode!(%{
-          srh_id: "1000",
-          connection_string: "redis://localhost:6379",
-          max_connections: 10
-        })
-      )
-    }
-  end
+  #  defp do_resolve("redis", _token) do
+  #    {
+  #      :ok,
+  #      # This is done to replicate what will eventually be API endpoints, so they keys are not atoms
+  #      Jason.decode!(
+  #        Jason.encode!(%{
+  #          srh_id: "1000",
+  #          connection_string: "redis://localhost:6379",
+  #          max_connections: 10
+  #        })
+  #      )
+  #    }
+  #  end
 end

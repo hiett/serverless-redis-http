@@ -73,11 +73,20 @@ defmodule Srh.Http.CommandHandler do
         {:ok, result_map} ->
           [result_map | responses]
 
+        {:connection_error, result} ->
+          {:connection_error, result}
+
         {:redis_error, result} ->
           [result | responses]
       end
 
-    dispatch_command_array(rest, connection_info, updated_responses)
+    case updated_responses do
+      {:connection_error, result} ->
+        {:connection_error, result}
+
+      _ ->
+        dispatch_command_array(rest, connection_info, updated_responses)
+    end
   end
 
   defp dispatch_command_array([], _connection_info, responses) do
@@ -95,43 +104,56 @@ defmodule Srh.Http.CommandHandler do
         # Borrow a client, then run all of the commands (wrapped in MULTI and EXEC)
         worker_pid = Client.borrow_worker(client_pid)
 
-        wrapped_command_array = [["MULTI"] | command_array]
-        do_dispatch_command_transaction_array(wrapped_command_array, worker_pid, responses)
+        # We are manually going to invoke the MULTI, because there might be a connection error to the Redis server.
+        # In that case, we don't want the error to be wound up in the array of errors,
+        # we instead want to return the error immediately.
+        case ClientWorker.redis_command(worker_pid, ["MULTI"]) do
+          {:ok, _} ->
+            do_dispatch_command_transaction_array(command_array, worker_pid, responses)
 
-        # Now manually run the EXEC - this is what contains the information to form the response, not the above
-        result = case ClientWorker.redis_command(worker_pid, ["EXEC"]) do
-          {:ok, res} ->
-            {
-              :ok,
-              res
-              |> Enum.map(&(%{result: &1}))
-            }
-          # TODO: Can there be any inline errors here? Wouldn't they fail the whole tx?
+            # Now manually run the EXEC - this is what contains the information to form the response, not the above
+            result =
+              case ClientWorker.redis_command(worker_pid, ["EXEC"]) do
+                {:ok, res} ->
+                  {
+                    :ok,
+                    res
+                    |> Enum.map(&%{result: &1})
+                  }
+
+                {:error, error} ->
+                  decode_error(error, srh_id)
+              end
+
+            Client.return_worker(client_pid, worker_pid)
+
+            # Fire back the result here, because the initial Multi was successful
+            result
 
           {:error, error} ->
-            {:redis_error, %{error: error.message}}
+            decode_error(error, srh_id)
         end
 
-        Client.return_worker(client_pid, worker_pid)
-
-        result
       {:error, msg} ->
         {:server_error, msg}
     end
   end
 
-  defp do_dispatch_command_transaction_array([current | rest], worker_pid, responses) when is_pid(worker_pid) do
-    updated_responses = case ClientWorker.redis_command(worker_pid, current) do
-      {:ok, res} ->
-        [%{result: res} | responses]
+  defp do_dispatch_command_transaction_array([current | rest], worker_pid, responses)
+       when is_pid(worker_pid) do
+    updated_responses =
+      case ClientWorker.redis_command(worker_pid, current) do
+        {:ok, res} ->
+          [%{result: res} | responses]
 
-      {:error, error} ->
-        [
-          %{
-            error: error.message
-          } | responses
-        ]
-    end
+        {:error, error} ->
+          [
+            %{
+              error: error.message
+            }
+            | responses
+          ]
+      end
 
     do_dispatch_command_transaction_array(rest, worker_pid, updated_responses)
   end
@@ -154,16 +176,34 @@ defmodule Srh.Http.CommandHandler do
             {:ok, %{result: res}}
 
           {:error, error} ->
-            {
-              :redis_error,
-              %{
-                error: error.message
-              }
-            }
+            decode_error(error, srh_id)
         end
 
       {:error, msg} ->
         {:server_error, msg}
+    end
+  end
+
+  # Figure out if it's an actual Redis error or a Redix error
+  defp decode_error(error, srh_id) do
+    case error do
+      %{reason: :closed} ->
+        IO.puts(
+          "WARNING: SRH was unable to connect to the Redis server. Please make sure it is running, and the connection information is correct. SRH ID: #{srh_id}"
+        )
+
+        {
+          :connection_error,
+          "SRH: Unable to connect to the Redis server. See SRH logs for more information."
+        }
+
+      _ ->
+        {
+          :redis_error,
+          %{
+            error: error.message
+          }
+        }
     end
   end
 end

@@ -31,6 +31,7 @@ defmodule Srh.Redis.ClientWorker do
       {:ok, res} ->
         {:reply, {:ok, res}, state}
 
+      # Both connection errors and Redis command errors will be handled here
       {:error, res} ->
         {:reply, {:error, res}, state}
     end
@@ -52,7 +53,6 @@ defmodule Srh.Redis.ClientWorker do
     {:noreply, state}
   end
 
-  # TODO: Handle host / port connections
   def handle_info(
         :create_connection,
         %{
@@ -62,6 +62,8 @@ defmodule Srh.Redis.ClientWorker do
         } = state
       )
       when is_binary(connection_string) do
+    # NOTE: Redix only seems to open the connection when the first command is sent
+    # This means that this will return :ok even if the connection string may not actually be connectable
     {:ok, pid} = Redix.start_link(connection_string)
     {:noreply, %{state | redix_pid: pid}}
   end

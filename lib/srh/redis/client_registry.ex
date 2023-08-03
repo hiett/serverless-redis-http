@@ -48,10 +48,9 @@ defmodule Srh.Redis.ClientRegistry do
           {:ok, pid},
           %{
             state_update
-          |
-            currently_borrowed_pids:
-              [pid | state_update.currently_borrowed_pids]
-              |> Enum.uniq()
+            | currently_borrowed_pids:
+                [pid | state_update.currently_borrowed_pids]
+                |> Enum.uniq()
           }
         }
     end
@@ -73,10 +72,9 @@ defmodule Srh.Redis.ClientRegistry do
       :noreply,
       %{
         state
-      |
-        worker_pids:
-          [pid | state.worker_pids]
-          |> Enum.uniq()
+        | worker_pids:
+            [pid | state.worker_pids]
+            |> Enum.uniq()
       }
     }
   end

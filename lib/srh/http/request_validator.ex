@@ -34,7 +34,6 @@ defmodule Srh.Http.RequestValidator do
   defp do_validate_encoding_header([first_item | rest]) do
     case first_item do
       "base64" -> {:ok, true}
-
       _ -> do_validate_encoding_header(rest)
     end
   end
