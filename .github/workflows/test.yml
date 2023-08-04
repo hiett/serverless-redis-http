@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'lib/**'
+      - 'Dockerfile'
+      - 'mix.exs'
+      - 'mix.lock'
   schedule:
     - cron: '0 12 * * *'
 
@@ -11,24 +14,58 @@ env:
   SRH_TOKEN: example_token
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SRH code
+        uses: actions/checkout@v3
+
+      - name: Build Dockerfile
+        run: docker build -t hiett/serverless-redis-http:latest .
+
+      - name: Export to TAR
+        run: docker save hiett/serverless-redis-http:latest -o /tmp/serverless-redis-http.tar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: serverless-redis-http
+          path: /tmp/serverless-redis-http.tar
+
   container-job:
     runs-on: ubuntu-latest
-    container: denoland/deno
+    needs: build
     services:
       redis:
         image: redis/redis-stack-server:6.2.6-v6 # 6.2 is the Upstash compatible Redis version
-      srh:
-        image: hiett/serverless-redis-http:latest
-        env:
-          SRH_MODE: env
-          SRH_TOKEN: ${{ env.SRH_TOKEN }}
-          SRH_CONNECTION_STRING: redis://redis:6379
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           repository: upstash/upstash-redis
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Download SRH artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: serverless-redis-http
+          path: /tmp
+
+      - name: Load SRH image
+        run: |
+          docker load --input /tmp/serverless-redis-http.tar
+          docker image ls -a | grep serverless-redis-http
+
+      # Placed inside the same docker network as the service container with job.container.network, at which point
+      # it can directly address Redis. We still need to expose SRH's port to the host machine, however, so that
+      # we can run tests against it.
+      - name: Run SRH container
+        run: |
+          docker run -it -d -p 8080:80 --network ${{ job.container.network }} -e SRH_MODE=env -e SRH_TOKEN=${{ env.SRH_TOKEN }} -e SRH_CONNECTION_STRING="redis://redis:6379" hiett/serverless-redis-http:latest
 
       # The following tests fail because of bugs with Upstash's implementation of Redis, NOT because of our library
       # So we remove them from the test suite
@@ -41,5 +78,5 @@ jobs:
       - name: Run @upstash/redis Test Suite
         run: deno test -A ./pkg
         env:
-          UPSTASH_REDIS_REST_URL: http://srh:80
+          UPSTASH_REDIS_REST_URL: http://localhost:8080
           UPSTASH_REDIS_REST_TOKEN: ${{ env.SRH_TOKEN }}
