@@ -61,7 +61,7 @@ jobs:
       # it can directly address Redis. We still need to expose SRH's port to the host machine, however, so that
       # we can run tests against it.
       - name: Run SRH container
-        run: \
+        run: |
           docker run -it -d -p 8080:80 \ 
             --network ${{ job.container.network }} \ 
             -e SRH_MODE=env \
