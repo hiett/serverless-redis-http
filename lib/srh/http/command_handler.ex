@@ -131,7 +131,6 @@ defmodule Srh.Http.CommandHandler do
             result
 
           {:error, %{reason: :closed} = error} ->
-            IO.puts("Transaction error: #{inspect(error)}")
             # Ensure that this pool is killed, but still pass the error up the chain for the response
             Client.destroy_workers(client_pid)
             decode_error(error, srh_id)
@@ -175,8 +174,6 @@ defmodule Srh.Http.CommandHandler do
        when is_number(max_connections) do
     case GenRegistry.lookup_or_start(Client, srh_id, [max_connections, connection_info]) do
       {:ok, pid} ->
-        IO.puts("SRH: Found client #{inspect(pid)}")
-
         # Run the command
         case Client.find_worker(pid)
              |> ClientWorker.redis_command(command_array) do

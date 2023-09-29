@@ -33,8 +33,6 @@ defmodule Srh.Redis.ClientRegistry do
   end
 
   def destroy_workers(registry) do
-    # TODO: remove before shipping
-    IO.puts("DEBUG: Destroying workers")
     GenServer.cast(registry, {:destroy_workers})
   end
 
