@@ -18,6 +18,7 @@ defmodule Srh.Redis.ClientWorker do
   end
 
   def redis_command(worker, command_array) do
+    IO.puts("redis_command (for pid #{inspect(worker)}): #{inspect(command_array)}")
     GenServer.call(worker, {:redis_command, command_array})
   end
 

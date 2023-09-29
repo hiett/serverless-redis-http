@@ -130,6 +130,12 @@ defmodule Srh.Http.CommandHandler do
             # Fire back the result here, because the initial Multi was successful
             result
 
+          {:error, %{reason: :closed} = error} ->
+            IO.puts("Transaction error: #{inspect(error)}")
+            # Ensure that this pool is killed, but still pass the error up the chain for the response
+            Client.destroy_workers(client_pid)
+            decode_error(error, srh_id)
+
           {:error, error} ->
             decode_error(error, srh_id)
         end
