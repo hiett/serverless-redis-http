@@ -35,6 +35,10 @@ defmodule Srh.Redis.Client do
     GenServer.cast(client, {:return_worker, pid})
   end
 
+  def destroy_workers(client) do
+    GenServer.cast(client, {:destroy_workers})
+  end
+
   def handle_call({:find_worker}, _from, %{registry_pid: registry_pid} = state)
       when is_pid(registry_pid) do
     {:ok, worker} = ClientRegistry.find_worker(registry_pid)
@@ -59,13 +63,17 @@ defmodule Srh.Redis.Client do
     {:noreply, state}
   end
 
+  def handle_cast({:destroy_workers}, state) do
+    ClientRegistry.destroy_workers(state.registry_pid)
+    {:stop, :normal, state}
+  end
+
   def handle_cast(_msg, state) do
     {:noreply, state}
   end
 
   def handle_info(:idle_death, state) do
     ClientRegistry.destroy_workers(state.registry_pid)
-
     {:stop, :normal, state}
   end
 
