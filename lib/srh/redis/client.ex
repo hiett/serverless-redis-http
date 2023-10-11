@@ -3,7 +3,7 @@ defmodule Srh.Redis.Client do
   alias Srh.Redis.ClientRegistry
   alias Srh.Redis.ClientWorker
 
-  @idle_death_time 1000 * 15
+  @idle_death_time 1000 * 60 * 15 # 15 minutes
 
   def start_link(max_connections, connection_info) do
     GenServer.start_link(__MODULE__, {max_connections, connection_info}, [])

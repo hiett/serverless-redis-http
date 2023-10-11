@@ -26,7 +26,10 @@ defmodule Srh.Http.BaseRouter do
   end
 
   match _ do
-    handle_response({:not_found, "SRH: Endpoint not found. SRH might not support this feature yet."}, conn)
+    handle_response(
+      {:not_found, "SRH: Endpoint not found. SRH might not support this feature yet."},
+      conn
+    )
   end
 
   defp do_command_request(conn, success_lambda) do
