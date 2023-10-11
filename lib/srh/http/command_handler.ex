@@ -130,6 +130,11 @@ defmodule Srh.Http.CommandHandler do
             # Fire back the result here, because the initial Multi was successful
             result
 
+          {:error, %{reason: :closed} = error} ->
+            # Ensure that this pool is killed, but still pass the error up the chain for the response
+            Client.destroy_workers(client_pid)
+            decode_error(error, srh_id)
+
           {:error, error} ->
             decode_error(error, srh_id)
         end
@@ -174,6 +179,12 @@ defmodule Srh.Http.CommandHandler do
              |> ClientWorker.redis_command(command_array) do
           {:ok, res} ->
             {:ok, %{result: res}}
+
+          # Jedix connection error
+          {:error, %{reason: :closed} = error} ->
+            # Ensure that this pool is killed, but still pass the error up the chain for the response
+            Client.destroy_workers(pid)
+            decode_error(error, srh_id)
 
           {:error, error} ->
             decode_error(error, srh_id)

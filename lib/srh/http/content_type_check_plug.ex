@@ -35,7 +35,10 @@ defmodule Srh.Http.ContentTypeCheckPlug do
         # Return a custom error, ensuring the same format as the other errors
         conn
         |> put_resp_content_type("application/json")
-        |> send_resp(400, Jason.encode!(%{error: "Invalid content type. Expected application/json."}))
+        |> send_resp(
+          400,
+          Jason.encode!(%{error: "Invalid content type. Expected application/json."})
+        )
         |> halt()
     end
   end

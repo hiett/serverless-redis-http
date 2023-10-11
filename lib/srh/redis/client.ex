@@ -3,7 +3,7 @@ defmodule Srh.Redis.Client do
   alias Srh.Redis.ClientRegistry
   alias Srh.Redis.ClientWorker
 
-  @idle_death_time 1000 * 15
+  @idle_death_time 1000 * 60 * 15 # 15 minutes
 
   def start_link(max_connections, connection_info) do
     GenServer.start_link(__MODULE__, {max_connections, connection_info}, [])
@@ -35,6 +35,10 @@ defmodule Srh.Redis.Client do
     GenServer.cast(client, {:return_worker, pid})
   end
 
+  def destroy_workers(client) do
+    GenServer.cast(client, {:destroy_workers})
+  end
+
   def handle_call({:find_worker}, _from, %{registry_pid: registry_pid} = state)
       when is_pid(registry_pid) do
     {:ok, worker} = ClientRegistry.find_worker(registry_pid)
@@ -59,13 +63,17 @@ defmodule Srh.Redis.Client do
     {:noreply, state}
   end
 
+  def handle_cast({:destroy_workers}, state) do
+    ClientRegistry.destroy_workers(state.registry_pid)
+    {:stop, :normal, state}
+  end
+
   def handle_cast(_msg, state) do
     {:noreply, state}
   end
 
   def handle_info(:idle_death, state) do
     ClientRegistry.destroy_workers(state.registry_pid)
-
     {:stop, :normal, state}
   end
 
