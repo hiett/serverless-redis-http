@@ -45,9 +45,9 @@ jobs:
         with:
           repository: upstash/upstash-redis
 
-      - uses: denoland/setup-deno@v1
+      - uses: oven-sh/setup-bun@v1
         with:
-          deno-version: v1.x
+          bun-version: latest
 
       - name: Download SRH artifact
         uses: actions/download-artifact@v3
@@ -75,8 +75,11 @@ jobs:
           rm ./pkg/commands/json_mget.test.ts
           rm ./pkg/commands/json_objlen.test.ts
 
+      - name: Install bun dependencies
+        run: bun install
+
       - name: Run @upstash/redis Test Suite
-        run: deno test -A ./pkg
+        run: bun test pkg
         env:
           UPSTASH_REDIS_REST_URL: http://localhost:8080
           UPSTASH_REDIS_REST_TOKEN: ${{ env.SRH_TOKEN }}
