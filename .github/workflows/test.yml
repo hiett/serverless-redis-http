@@ -37,7 +37,7 @@ jobs:
     needs: build
     services:
       redis:
-        image: redis/redis-stack-server:6.2.6-v6 # 6.2 is the Upstash compatible Redis version
+        image: redis/redis-stack-server:7.2.0-v7
 
     steps:
       - name: Checkout code
@@ -79,7 +79,7 @@ jobs:
         run: bun install
 
       - name: Run @upstash/redis Test Suite
-        run: bun test pkg
+        run: bun run test
         env:
           UPSTASH_REDIS_REST_URL: http://localhost:8080
           UPSTASH_REDIS_REST_TOKEN: ${{ env.SRH_TOKEN }}
