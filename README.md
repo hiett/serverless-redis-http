@@ -142,4 +142,6 @@ Once you have created this, mount it to the docker container to the `/app/srh-co
 | SRH_MODE | `file` | Can be `env` or `file`. If `file`, see [Connecting to multiple Redis servers](#connecting-to-multiple-redis-servers-at-the-same-time). If set to `env`, you are required to provide the following environment variables: |
 | SRH_TOKEN | `<required if SRH_MODE = env>` | Set the token that the Rest API will require |
 | SRH_CONNECTION_STRING | `<required if SRH_MODE = env>` | Sets the connection string to the Redis server. |
-| SRH_MAX_CONNECTIONS | `3` | Only used if `SRH_MODE=env`.
+| SRH_MAX_CONNECTIONS | `3` | Only used if `SRH_MODE=env`. |
+| SRH_PORT | `80` | Configure the port SRH runs on. |
+| SRH_IPV6 | `false` | Set to `true` to enabled IPv6 support. |
