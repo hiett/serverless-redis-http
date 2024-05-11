@@ -16,7 +16,8 @@ defmodule Srh do
         scheme: :http,
         plug: Srh.Http.BaseRouter,
         options: [
-          port: port
+          port: port,
+          net: check_inet_mode()
         ]
       }
     ]
@@ -25,4 +26,16 @@ defmodule Srh do
 
     Supervisor.start_link(children, opts)
   end
+
+  defp check_inet_mode() do
+    ipv6 = System.get_env("SRH_IPV6", "false")
+    do_check_inet_mode(ipv6)
+  end
+
+  defp do_check_inet_mode("true") do
+    IO.puts("Using ipv6.")
+    :inet6
+  end
+
+  defp do_check_inet_mode(_), do: :inet
 end
