@@ -1,4 +1,13 @@
+# syntax=docker/dockerfile:1
+
+###
 FROM elixir:1.13.4-alpine AS builder
+
+#
+ARG MIX_ENV=prod
+ENV MIX_ENV=${MIX_ENV}
+
+ARG PORT
 
 WORKDIR /app
 
@@ -13,14 +22,17 @@ RUN mix deps.get
 COPY lib/ ./lib/
 COPY config/ ./config/
 
-ENV MIX_ENV=prod
 RUN mix release
 
+###
 FROM elixir:1.13.4-alpine
+
+#
+ARG MIX_ENV=prod
+ENV MIX_ENV=${MIX_ENV}
 
 WORKDIR /app
 
-COPY --from=builder /app/_build/prod/rel/prod/ ./_build/prod/rel/prod/
+COPY --from=builder /app/_build/${MIX_ENV}/rel/prod/ ./_build/${MIX_ENV}/rel/prod/
 
-ENV MIX_ENV=prod
-CMD ["_build/prod/rel/prod/bin/prod", "start"]
+CMD ["sh", "-c", "_build/${MIX_ENV}/rel/prod/bin/prod start"]

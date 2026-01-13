@@ -1,0 +1,21 @@
+###
+services:
+  # docker buildx bake
+  srh:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      args:
+        - MIX_ENV=${MIX_ENV:-runtime}
+        - PORT=${PORT:-80}
+    ports:
+      - '8079:${PORT:-80}'
+    image: local/serverless-redis-http
+    environment:
+      SRH_PORT: ${PORT:-80}
+      SRH_MODE: env
+      SRH_TOKEN: example_token
+      SRH_CONNECTION_STRING: 'redis://redis:6379'
