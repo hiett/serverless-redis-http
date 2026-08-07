@@ -1,5 +1,6 @@
 defmodule Srh.Redis.ClientWorker do
   use GenServer
+  alias Srh.Redis.ConnectionOpts
 
   def start_link(connection_info) do
     GenServer.start_link(__MODULE__, connection_info, [])
@@ -62,28 +63,9 @@ defmodule Srh.Redis.ClientWorker do
         } = state
       )
       when is_binary(connection_string) do
-    enable_ssl = String.starts_with?(connection_string, "rediss://")
-
-    socket_opts =
-      case enable_ssl do
-        true ->
-          [
-            customize_hostname_check: [
-              match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
-            ]
-          ]
-
-        false ->
-          []
-      end
-
     # NOTE: Redix only seems to open the connection when the first command is sent
     # This means that this will return :ok even if the connection string may not actually be connectable
-    {:ok, pid} =
-      Redix.start_link(connection_string,
-        ssl: enable_ssl,
-        socket_opts: socket_opts
-      )
+    {:ok, pid} = Redix.start_link(connection_string, ConnectionOpts.build(connection_string))
 
     {:noreply, %{state | redix_pid: pid}}
   end
