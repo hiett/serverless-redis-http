@@ -36,6 +36,36 @@ export const redis = new Redis({
 });
 ```
 
+## Realtime (pub/sub via SSE)
+
+SRH supports Upstash's Realtime feature: subscribing to Redis channels/patterns over a long-lived HTTP connection using Server-Sent Events (SSE). This works with the `@upstash/redis` SDK's `subscribe`/`psubscribe` APIs out of the box, no extra configuration needed.
+
+Under the hood, each subscription opens its own dedicated HTTP connection:
+
+```
+POST /subscribe/:channel     -> subscribes to a single channel (Redis SUBSCRIBE)
+POST /psubscribe/:pattern    -> subscribes to a glob-style pattern (Redis PSUBSCRIBE)
+```
+
+Both require the usual `Authorization: Bearer <token>` header and a JSON body of `[]`. The response is `Content-Type: text/event-stream`, streaming one line per event:
+
+```
+data: subscribe,<channel>,1
+data: message,<channel>,<payload>
+```
+
+or, for pattern subscriptions:
+
+```
+data: psubscribe,<pattern>,1
+data: pmessage,<pattern>,<channel>,<payload>
+```
+
+### Known limitations
+
+- Each open subscription holds its own dedicated Redis connection for as long as the HTTP connection stays open. Unlike regular commands, these are **not pooled**, so subscribing to many channels/patterns concurrently means an equal number of concurrent Redis connections.
+- On an otherwise-silent channel, SRH sends an SSE comment line (`: heartbeat`) every 15 seconds. This is only there to detect a disconnected client promptly, and is ignored by any spec-compliant SSE consumer (including the `@upstash/redis` SDK) since it doesn't start with `data:`.
+
 # Setting up SRH
 ## Via Docker command
 If you have a locally running Redis server, you can simply start an SRH container that connects to it.

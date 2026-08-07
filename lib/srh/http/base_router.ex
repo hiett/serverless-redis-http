@@ -3,6 +3,7 @@ defmodule Srh.Http.BaseRouter do
   alias Srh.Http.RequestValidator
   alias Srh.Http.CommandHandler
   alias Srh.Http.ResultEncoder
+  alias Srh.Http.SubscribeHandler
 
   plug(:match)
   plug(Srh.Http.ContentTypeCheckPlug)
@@ -25,6 +26,14 @@ defmodule Srh.Http.BaseRouter do
     do_command_request(conn, &CommandHandler.handle_command_transaction_array(&1, &2))
   end
 
+  post "/subscribe/:channel" do
+    do_subscribe_request(conn, &SubscribeHandler.handle_subscribe(conn, channel, &1))
+  end
+
+  post "/psubscribe/:pattern" do
+    do_subscribe_request(conn, &SubscribeHandler.handle_psubscribe(conn, pattern, &1))
+  end
+
   match _ do
     handle_response(
       {:not_found, "SRH: Endpoint not found. SRH might not support this feature yet."},
@@ -39,6 +48,16 @@ defmodule Srh.Http.BaseRouter do
     |> handle_extract_auth(&success_lambda.(conn, &1))
     |> handle_encoding_step(encoding_enabled)
     |> handle_response(conn)
+  end
+
+  defp do_subscribe_request(conn, success_lambda) do
+    case handle_extract_auth(conn, success_lambda) do
+      {:stream, streamed_conn} ->
+        streamed_conn
+
+      error ->
+        handle_response(error, conn)
+    end
   end
 
   defp handle_extract_auth(conn, success_lambda) do
